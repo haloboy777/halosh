@@ -2,6 +2,7 @@
 
 //Header Files
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,10 +33,10 @@ int halo_inbuilt_func_num() {
 int halo_cd(char **args)
 {
   if (args[1] == NULL) {
-    fprintf(stderr, "halo: expected argument to \"cd\"\n");
+    fprintf(stderr, "halosh: expected argument to \"cd\"\n");
   } else {
     if (chdir(args[1]) != 0) {
-      perror("halo");
+      perror("halosh");
     }
   }
   return 1;
@@ -66,11 +67,11 @@ int halo_launch(char **args)
   pid = fork();
   if (pid == 0) {
     if (execvp(args[0], args) == -1) {
-      perror("halo");
+      perror("halosh");
     }
     exit(EXIT_FAILURE);
   } else if (pid < 0) {
-    perror("halo");
+    perror("halosh");
   } else {
     do {
       waitpid(pid, &halo_flag, WUNTRACED);
@@ -117,7 +118,7 @@ char **halo_split_func(char *line)
   char *token, **tokens_backup;
 
   if (!tokens) {
-    fprintf(stderr, "halo: allocation error\n");
+    fprintf(stderr, "halosh: allocation error\n");
     exit(EXIT_FAILURE);
   }
 
@@ -132,7 +133,7 @@ char **halo_split_func(char *line)
       tokens = realloc(tokens, bufsize * sizeof(char*));
       if (!tokens) {
 		free(tokens_backup);
-        fprintf(stderr, "halo: allocation error\n");
+        fprintf(stderr, "halosh: allocation error\n");
         exit(EXIT_FAILURE);
       }
     }
@@ -145,15 +146,22 @@ char **halo_split_func(char *line)
 
 void halo_loop(void)
 {
+  time_t timer;
+  char time_now[26];
+  struct tm* tm_info;
   char *line;
   char **args;
   int halo_flag;
   char *path_name,*path_name_base;
 
   do {
+    
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(time_now, 26, "%H:%M:%S", tm_info);
     path_name = (char*)get_current_dir_name();
     path_name_base = (char*)basename(path_name);
-    printf(">%s> ",path_name_base);
+    printf("%s>%s> ",time_now,path_name_base);
     line = halo_get_line();
     args = halo_split_func(line);
     halo_flag = halo_exec(args);
